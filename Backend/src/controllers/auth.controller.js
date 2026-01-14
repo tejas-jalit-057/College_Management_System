@@ -1,7 +1,7 @@
-import pool from '../db/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import pool from '../db/index.js';
 
 dotenv.config();
 
@@ -10,7 +10,7 @@ export const login = async (req, res) => {
         const { email, password } = req.body;
 
         const userResult = await pool.query(
-            'SELECT * FROM users WHERE email = student@example.com',
+            'SELECT * FROM users WHERE email = $1',
             [email]
         );
 
@@ -20,6 +20,8 @@ export const login = async (req, res) => {
 
         const user = userResult.rows[0];
 
+
+        
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
             return res.status(400).json({ message: 'Invalid email or password' });
