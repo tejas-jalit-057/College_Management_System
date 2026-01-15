@@ -1,60 +1,73 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import pool from '../db/index.js';
+import bcrypt from "bcrypt";
+import { generateToken } from "../utils/jwt.js";
+import pool from "../db/index.js";
 
-dotenv.config();
+
+
+
+// const users = [
+//     {
+//         id: 1,
+//         email: "admin@gmail.com",
+//         password: "",
+//         role: "admin"
+//     },
+//     {
+//         id: 2,
+//         email: "student@gmail.com",
+//         password: "",
+//         role: "student"
+//     }
+// ];
+
+
+
+// const createPasswords = async () => {
+//     users[0].password = await bcrypt.hash("1234", 10);
+//     users[1].password = await bcrypt.hash("1234", 10);
+// };
+// createPasswords();
+
+
+
+
 
 export const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const userResult = await pool.query(
-            'SELECT * FROM users WHERE email = $1',
-            [email]
-        );
-
-        if (userResult.rows.length === 0) {
-            return res.status(400).json({ message: 'Invalid email or password' });
-        }
-
-        const user = userResult.rows[0];
+    const { email, password } = req.body;
 
 
-        
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(400).json({ message: 'Invalid email or password' });
-        }
+    const result = await pool.query(
+        "SELECT * FROM users WHERE email = $1",        // gets user from the database
+        [email]
+    );
 
-        const token = jwt.sign(
-            { user_id: user.user_id, role_id: user.role_id },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
-        return res.json({
-            token,
-            role_id: user.role_id,
-            user_id: user.user_id,
-            full_name: user.full_name,
-        });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'Server error' });
+    if (result.rows.length === 0) {
+        return res.status(401).json({ message: "Invalid email or password" });
     }
-};
 
-export const getMe = async (req, res) => {
-    try {
-        const userResult = await pool.query(
-            'SELECT * FROM users WHERE user_id = $1',
-            [req.user.user_id]
-        );
+    const user = result.rows[0];
 
-        return res.json(userResult.rows[0]);
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'Server error' });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+        return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    // const user = users.find(u => u.email === email);
+    // if (!user) {
+    //     return res.status(401).json({ message: "Wrong email" });
+    // }
+
+    // const match = await bcrypt.compare(password, user.password);
+    // if (!match) {
+    //     return res.status(401).json({ message: "Wrong password" });
+    // }
+
+    const token = generateToken({
+        id: user.id,
+        role: user.role
+    });
+
+    res.cookie("token", token, { httpOnly: true });
+
+    res.json({ message: "Login success" });
 };

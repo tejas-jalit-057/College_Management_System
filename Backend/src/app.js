@@ -1,18 +1,16 @@
-// src/app.js
 import express from 'express';
-import cors from 'cors';
-import authRoutes from './routes/auth.routes.js';
-const app = express(); 
+import cookieParser from "cookie-parser";
+import authRoutes from './routes/auth.routes.js'
 
-app.use(cors());
+
+const app = express(); 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
     res.send('CMS Backend Running');
 });
 
-
-app.use('/api/auth', authRoutes);
-
+app.use("/api/auth", authRoutes);
 
 export default app;
