@@ -1,15 +1,17 @@
 import { verifyToken } from "../utils/jwt.js";
 
-const authMiddleware = (req, res, next) => {
-    const token = req.cookies.token;
+export const authMiddleware = (req, res, next) => {
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
 
     if (!token) {
-        return res.status(401).json({ message: "No token" });
+        return res.status(401).json({ message: "No token provided" });
     }
 
-    const decoded = verifyToken(token);
-
-    req.user = decoded;
-    next();
+    try {
+        const decoded = verifyToken(token);
+        req.user = decoded; // attach decoded payload
+        next();
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid or expired token" });
+    }
 };
-export default authMiddleware;

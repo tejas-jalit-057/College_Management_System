@@ -1,16 +1,14 @@
-import express from 'express';
+import express from "express";
 import cookieParser from "cookie-parser";
-import authRoutes from './routes/auth.routes.js'
+import authRoutes from "./routes/auth.routes.js";
+import studentRoutes from "./routes/student.routes.js";
 
+const app = express();
 
-const app = express(); 
 app.use(express.json());
 app.use(cookieParser());
 
-app.get('/', (req, res) => {
-    res.send('CMS Backend Running');
-});
-
 app.use("/api/auth", authRoutes);
+app.use("/api/students", studentRoutes);
 
 export default app;
